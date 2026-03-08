@@ -1,0 +1,14 @@
+# dataset
+data/
+
+# python
+__pycache__/
+*.pyc
+
+# model
+*.pth
+*.pt
+
+# environment
+venv/
+.env
