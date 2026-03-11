@@ -19,4 +19,4 @@ python test.py \
  --topk 32 \
  --num_layers 3 \
  --load model_best.pth
- 
+ -- image_path data/iu_xray/images/00000001_000.png

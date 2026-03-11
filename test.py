@@ -1,6 +1,10 @@
 import torch
 import argparse
 import numpy as np
+
+from PIL import Image
+from torchvision import transforms
+
 from modules.tester import Tester
 from models.a3net import BaseModel
 from modules.loss import compute_loss
