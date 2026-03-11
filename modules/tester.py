@@ -97,27 +97,53 @@ class Tester(BaseTester):
             test_gts.to_csv(os.path.join(self.save_dir, "gts.csv"), index=False, header=False)
         return log
 
-    def predict(self, image):
-        """
-        Generate report for a single image
-        image: Tensor shape [C, H, W]
-        """
+    # def predict(self, image):
+    #     """
+    #     Generate report for a single image
+    #     image: Tensor shape [C, H, W]
+    #     """
 
+    #     self.model.eval()
+
+    #     with torch.no_grad():
+
+    #         # add batch dimension
+    #         image = image.unsqueeze(0).to(self.device)
+
+    #         output = self.model(image, mode='sample')
+
+    #         if isinstance(output, tuple):
+    #             output = output[0]
+
+    #         report = self.model.tokenizer.decode_batch(output.cpu().numpy())[0]
+
+    #     return report
+    
+    def predict(self, image1, image2):
+        """
+        Generate a report string for two input images.
+
+        Parameters
+        ----------
+        image1, image2 : torch.Tensor
+            Each tensor has shape [C, H, W].
+
+        Returns
+        -------
+        str
+            The two individual predictions joined into a single
+            text string (separated by a space; you can change the
+            delimiter as needed).
+        """
         self.model.eval()
-
         with torch.no_grad():
-
-            # add batch dimension
-            image = image.unsqueeze(0).to(self.device)
-
-            output = self.model(image, mode='sample')
-
+            imgs = torch.stack([image1, image2], dim=0).to(self.device)
+            output = self.model(imgs, mode='sample')
             if isinstance(output, tuple):
                 output = output[0]
-
-            report = self.model.tokenizer.decode_batch(output.cpu().numpy())[0]
-
-        return report
+            reports = self.model.tokenizer.decode_batch(output.cpu().numpy())
+            # combine the two reports into one string
+            return " ".join(reports)
 
     def plot(self):
         assert self.args.batch_size == 1 and self.args.beam_size == 1

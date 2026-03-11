@@ -144,10 +144,8 @@ def main():
         img1 = transform(img1)
         img2 = transform(img2)
 
-        # tạo tensor 2 views
-        image = torch.stack([img1, img2])
-
-        report = tester.predict(image)
+        # call the Tester.predict method with two separate tensors
+        report = tester.predict(img1, img2)
 
         print("\nGenerated report:")
         print(report)
