@@ -129,6 +129,8 @@ def main():
     # nếu có image_path → chạy inference
     if args.image_path is not None:
 
+        image = Image.open(args.image_path).convert("RGB")
+
         transform = transforms.Compose([
             transforms.Resize((224,224)),
             transforms.ToTensor(),
@@ -136,8 +138,10 @@ def main():
                                 (0.229,0.224,0.225))
         ])
 
-        image = Image.open(args.image_path).convert("RGB")
         image = transform(image)
+
+        # IU-Xray cần 2 views → duplicate
+        image = torch.stack([image, image])
 
         report = tester.predict(image)
 
