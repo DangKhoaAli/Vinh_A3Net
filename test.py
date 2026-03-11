@@ -21,8 +21,10 @@ def parse_agrs():
                         help='the path to the directory containing the data.')
     parser.add_argument('--ann_path', type=str, default='data/iu_xray/annotation.json',
                         help='the path to the directory containing the data.')
-    parser.add_argument('--image_path', type=str, default=None,
+    parser.add_argument('--image_path1', type=str, default=None,
                     help='path to a single image for inference')
+    parser.add_argument('--image_path2', type=str, default=None,
+                help='path to a single image for inference')
 
     # Data loader settings
     parser.add_argument('--dataset_name', type=str, default='iu_xray', choices=['iu_xray', 'mimic_cxr'],
@@ -127,9 +129,7 @@ def main():
     tester = Tester(model, criterion, metrics, args, test_dataloader)
     
     # nếu có image_path → chạy inference
-    if args.image_path is not None:
-
-        image = Image.open(args.image_path).convert("RGB")
+    if args.image_path1 is not None and args.image_path2 is not None:
 
         transform = transforms.Compose([
             transforms.Resize((224,224)),
@@ -138,10 +138,14 @@ def main():
                                 (0.229,0.224,0.225))
         ])
 
-        image = transform(image)
+        img1 = Image.open(args.image_path1).convert("RGB")
+        img2 = Image.open(args.image_path2).convert("RGB")
 
-        # IU-Xray cần 2 views → duplicate
-        image = torch.stack([image, image])
+        img1 = transform(img1)
+        img2 = transform(img2)
+
+        # tạo tensor 2 views
+        image = torch.stack([img1, img2])
 
         report = tester.predict(image)
 
