@@ -17,6 +17,8 @@ def parse_agrs():
                         help='the path to the directory containing the data.')
     parser.add_argument('--ann_path', type=str, default='data/iu_xray/annotation.json',
                         help='the path to the directory containing the data.')
+    parser.add_argument('--image_path', type=str, default=None,
+                    help='path to a single image for inference')
 
     # Data loader settings
     parser.add_argument('--dataset_name', type=str, default='iu_xray', choices=['iu_xray', 'mimic_cxr'],
@@ -119,7 +121,27 @@ def main():
     metrics = compute_scores
     
     tester = Tester(model, criterion, metrics, args, test_dataloader)
-    tester.test()
+    
+    # nếu có image_path → chạy inference
+    if args.image_path is not None:
+
+        transform = transforms.Compose([
+            transforms.Resize((224,224)),
+            transforms.ToTensor(),
+            transforms.Normalize((0.485,0.456,0.406),
+                                (0.229,0.224,0.225))
+        ])
+
+        image = Image.open(args.image_path).convert("RGB")
+        image = transform(image)
+
+        report = tester.predict(image)
+
+        print("\nGenerated report:")
+        print(report)
+
+    else:
+        tester.test()
 
 
 if __name__ == '__main__':

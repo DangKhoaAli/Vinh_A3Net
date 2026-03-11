@@ -77,6 +77,7 @@ class Tester(BaseTester):
                     self.device), reports_masks.to(self.device)
                 output = self.model(images, mode='sample')
                 # reports = self.model.tokenizer.decode_batch(output.cpu().numpy())
+                
                 output = self.model(images, mode='sample')
 
                 if isinstance(output, tuple):
@@ -96,6 +97,28 @@ class Tester(BaseTester):
             test_gts.to_csv(os.path.join(self.save_dir, "gts.csv"), index=False, header=False)
         return log
 
+    def predict(self, image):
+        """
+        Generate report for a single image
+        image: Tensor shape [C, H, W]
+        """
+
+        self.model.eval()
+
+        with torch.no_grad():
+
+            # add batch dimension
+            image = image.unsqueeze(0).to(self.device)
+
+            output = self.model(image, mode='sample')
+
+            if isinstance(output, tuple):
+                output = output[0]
+
+            report = self.model.tokenizer.decode_batch(output.cpu().numpy())[0]
+
+        return report
+
     def plot(self):
         assert self.args.batch_size == 1 and self.args.beam_size == 1
         self.logger.info('Start to plot attention weights in the test set.')
@@ -113,6 +136,7 @@ class Tester(BaseTester):
                 output = self.model(images, mode='sample')
                 image = torch.clamp((images[0].cpu() * std + mean) * 255, 0, 255).int().cpu().numpy()
                 # report = self.model.tokenizer.decode_batch(output.cpu().numpy())[0].split()
+
                 if isinstance(output, tuple):
                     output = output[0]
 
