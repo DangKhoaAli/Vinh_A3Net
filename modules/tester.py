@@ -76,6 +76,12 @@ class Tester(BaseTester):
                 images, reports_ids, reports_masks = images.to(self.device), reports_ids.to(
                     self.device), reports_masks.to(self.device)
                 output = self.model(images, mode='sample')
+                # reports = self.model.tokenizer.decode_batch(output.cpu().numpy())
+                output = self.model(images, mode='sample')
+
+                if isinstance(output, tuple):
+                    output = output[0]
+
                 reports = self.model.tokenizer.decode_batch(output.cpu().numpy())
                 ground_truths = self.model.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
                 test_res.extend(reports)
@@ -106,6 +112,10 @@ class Tester(BaseTester):
                     self.device), reports_masks.to(self.device)
                 output = self.model(images, mode='sample')
                 image = torch.clamp((images[0].cpu() * std + mean) * 255, 0, 255).int().cpu().numpy()
+                # report = self.model.tokenizer.decode_batch(output.cpu().numpy())[0].split()
+                if isinstance(output, tuple):
+                    output = output[0]
+
                 report = self.model.tokenizer.decode_batch(output.cpu().numpy())[0].split()
                 attention_weights = [layer.src_attn.attn.cpu().numpy()[:, :, :-1].mean(0).mean(0) for layer in
                                      self.model.encoder_decoder.model.decoder.layers]
