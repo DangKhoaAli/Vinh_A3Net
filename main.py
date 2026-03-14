@@ -1,7 +1,7 @@
 import torch
 import argparse
 import numpy as np
-from datetime import datetime as time
+from datetime import datetime
 import datetime, platform, subprocess
 import os
 import wandb, json
