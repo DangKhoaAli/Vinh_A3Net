@@ -26,7 +26,7 @@ def get_git_commit():
 
 def get_env_info():
     return {
-        "time": datetime.datetime.now().isoformat(),
+        "time": datetime.now().isoformat(),
         "python": platform.python_version(),
         "platform": platform.platform(),
         "pytorch": torch.__version__,
