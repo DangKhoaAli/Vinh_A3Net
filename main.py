@@ -1,6 +1,10 @@
 import torch
 import argparse
 import numpy as np
+from datetime import datetime as time
+import os
+import wandb
+from utils import dump_json, get_env_info
 from models.a3net import BaseModel
 from modules.loss import compute_loss
 from modules.trainer_cmn import Trainer
@@ -105,7 +109,7 @@ def main():
     if use_wandb:
         wandb.init(
             project=os.environ.get("WANDB_PROJECT", "A3Net-IU-Xray"),
-            name=os.environ.get("WANDB_NAME", f"{args.dataset_name}_seed{args.seed}"),
+            name=os.environ.get("WANDB_NAME", f"{args.dataset_name}_date{time.now().strftime('%Y%m%d_%H%M%S')}"),
             config=vars(args),
         )
         # log thêm thông tin môi trường bạn đã dump
@@ -113,7 +117,7 @@ def main():
 
     # fix random seeds
     torch.manual_seed(args.seed)
-    torch.backends.cudnn.deterministic = True
+    torch.backends.dcunn.deterministic = True
     torch.backends.cudnn.benchmark = False
     np.random.seed(args.seed)
 
