@@ -2,8 +2,9 @@ import torch
 import argparse
 import numpy as np
 from datetime import datetime as time
+import datetime, platform, subprocess
 import os
-import wandb
+import wandb, json
 from utils import dump_json, get_env_info
 from models.a3net import BaseModel
 from modules.loss import compute_loss
@@ -12,6 +13,30 @@ from modules.tokenizers import Tokenizer
 from modules.metrics import compute_scores
 from modules.dataloaders import R2DataLoader
 from modules.optimizers import build_optimizer, build_lr_scheduler
+
+
+def dump_json(path, obj):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(obj, f, indent=2, ensure_ascii=False)
+
+def get_git_commit():
+    try:
+        return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
+    except Exception:
+        return None
+
+def get_env_info():
+    return {
+        "time": datetime.datetime.now().isoformat(),
+        "python": platform.python_version(),
+        "platform": platform.platform(),
+        "pytorch": torch.__version__,
+        "cuda_available": torch.cuda.is_available(),
+        "cuda_version": torch.version.cuda,
+        "cudnn_version": torch.backends.cudnn.version(),
+        "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+        "git_commit": get_git_commit(),
+    }
 
 def parse_agrs():
     parser = argparse.ArgumentParser()
@@ -97,53 +122,153 @@ def parse_agrs():
     args = parser.parse_args()
     return args
 
+# def main():
+#     # parse arguments
+#     args = parse_agrs()
+
+#     os.makedirs(args.save_dir, exist_ok=True)
+#     dump_json(os.path.join(args.save_dir, "run_config.json"), vars(args))
+#     dump_json(os.path.join(args.save_dir, "env.json"), get_env_info())
+#         # ---- W&B init (optional, but recommended) ----
+#     use_wandb = True  # hoặc cho thành arg --use_wandb nếu muốn
+#     if use_wandb:
+#         wandb.init(
+#             project=os.environ.get("WANDB_PROJECT", "A3Net-IU-Xray"),
+#             name=os.environ.get("WANDB_NAME", f"{args.dataset_name}_date{time.now().strftime('%Y%m%d_%H%M%S')}"),
+#             config=vars(args),
+#         )
+#         # log thêm thông tin môi trường bạn đã dump
+#         wandb.config.update(get_env_info(), allow_val_change=True)
+
+#     # fix random seeds
+#     torch.manual_seed(args.seed)
+#     torch.backends.dcunn.deterministic = True
+#     torch.backends.cudnn.benchmark = False
+#     np.random.seed(args.seed)
+
+#     # create tokenizer
+#     tokenizer = Tokenizer(args)
+    
+#     # create data loader
+#     train_dataloader = R2DataLoader(args, tokenizer, split='train', shuffle=True)
+#     val_dataloader = R2DataLoader(args, tokenizer, split='val', shuffle=False)
+#     test_dataloader = R2DataLoader(args, tokenizer, split='test', shuffle=False)
+
+#     # build model architecture
+#     model = BaseModel(args, tokenizer).to('cuda')
+
+#     # get function handles of loss and metrics
+#     criterion = compute_loss
+#     metrics = compute_scores
+
+#     # build optimizer, learning rate scheduler
+#     optimizer = build_optimizer(args, model)
+#     lr_scheduler = build_lr_scheduler(args, optimizer)
+    
+#     # build trainer and start to train
+#     trainer = Trainer(model, criterion, metrics, optimizer, args, lr_scheduler, train_dataloader, val_dataloader, test_dataloader)
+#     trainer.train()
+
 def main():
-    # parse arguments
+
     args = parse_agrs()
 
+    # ===== run id chuẩn research =====
+    run_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+    run_name = f"{args.dataset_name}_bs{args.batch_size}_lr{args.lr_ed}_seed{args.seed}_{run_time}"
+
     os.makedirs(args.save_dir, exist_ok=True)
+
     dump_json(os.path.join(args.save_dir, "run_config.json"), vars(args))
     dump_json(os.path.join(args.save_dir, "env.json"), get_env_info())
-        # ---- W&B init (optional, but recommended) ----
-    use_wandb = True  # hoặc cho thành arg --use_wandb nếu muốn
-    if use_wandb:
-        wandb.init(
-            project=os.environ.get("WANDB_PROJECT", "A3Net-IU-Xray"),
-            name=os.environ.get("WANDB_NAME", f"{args.dataset_name}_date{time.now().strftime('%Y%m%d_%H%M%S')}"),
-            config=vars(args),
-        )
-        # log thêm thông tin môi trường bạn đã dump
-        wandb.config.update(get_env_info(), allow_val_change=True)
 
-    # fix random seeds
+    # ===== W&B INIT =====
+    wandb.init(
+        project="A3Net-IU-Xray",
+        name=run_name,
+        group=f"beam{args.beam_size}_layer{args.num_layers}",
+        tags=[
+            args.dataset_name,
+            args.visual_extractor,
+            f"topk{args.topk}",
+            f"cmm{args.cmm_size}"
+        ],
+        config=vars(args)
+    )
+
+    wandb.config.update(get_env_info(), allow_val_change=True)
+
+    # ===== log git commit (rất mạnh khi research) =====
+    try:
+        commit_id = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
+        wandb.config.update({"git_commit": commit_id})
+    except:
+        pass
+
+    # ===== fix seed chuẩn =====
     torch.manual_seed(args.seed)
-    torch.backends.dcunn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    torch.cuda.manual_seed_all(args.seed)
     np.random.seed(args.seed)
+    random.seed(args.seed)
 
-    # create tokenizer
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    # ===== tokenizer =====
     tokenizer = Tokenizer(args)
-    
-    # create data loader
+
+    # ===== dataloader =====
     train_dataloader = R2DataLoader(args, tokenizer, split='train', shuffle=True)
     val_dataloader = R2DataLoader(args, tokenizer, split='val', shuffle=False)
     test_dataloader = R2DataLoader(args, tokenizer, split='test', shuffle=False)
 
-    # build model architecture
+    # ===== log dataset info =====
+    wandb.config.update({
+        "train_size": len(train_dataloader.dataset),
+        "val_size": len(val_dataloader.dataset),
+        "test_size": len(test_dataloader.dataset),
+        "vocab_size": len(tokenizer.idx2word)
+    })
+
+    # ===== model =====
     model = BaseModel(args, tokenizer).to('cuda')
 
-    # get function handles of loss and metrics
+    # ===== log model parameter count =====
+    total_params = sum(p.numel() for p in model.parameters())
+    wandb.config.update({"model_parameters": total_params})
+
+    # ===== gradient tracking =====
+    wandb.watch(model, log="gradients", log_freq=500)
+
+    # ===== loss + metric =====
     criterion = compute_loss
     metrics = compute_scores
 
-    # build optimizer, learning rate scheduler
+    # ===== optimizer + scheduler =====
     optimizer = build_optimizer(args, model)
     lr_scheduler = build_lr_scheduler(args, optimizer)
-    
-    # build trainer and start to train
-    trainer = Trainer(model, criterion, metrics, optimizer, args, lr_scheduler, train_dataloader, val_dataloader, test_dataloader)
+
+    # ===== trainer =====
+    trainer = Trainer(
+        model,
+        criterion,
+        metrics,
+        optimizer,
+        args,
+        lr_scheduler,
+        train_dataloader,
+        val_dataloader,
+        test_dataloader
+    )
+
     trainer.train()
 
+    # ===== save artifact model =====
+    artifact = wandb.Artifact("best_model", type="model")
+    artifact.add_file(os.path.join(args.save_dir, "model_best.pth"))
+    wandb.log_artifact(artifact)
+
+    wandb.finish()
 
 if __name__ == '__main__':
     main()
