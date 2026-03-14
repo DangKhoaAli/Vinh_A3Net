@@ -2,7 +2,7 @@ import torch
 import argparse
 import numpy as np
 from datetime import datetime
-import datetime, platform, subprocess
+import platform, subprocess
 import os
 import wandb, json
 from models.a3net import BaseModel
