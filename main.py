@@ -97,6 +97,20 @@ def main():
     # parse arguments
     args = parse_agrs()
 
+    os.makedirs(args.save_dir, exist_ok=True)
+    dump_json(os.path.join(args.save_dir, "run_config.json"), vars(args))
+    dump_json(os.path.join(args.save_dir, "env.json"), get_env_info())
+        # ---- W&B init (optional, but recommended) ----
+    use_wandb = True  # hoặc cho thành arg --use_wandb nếu muốn
+    if use_wandb:
+        wandb.init(
+            project=os.environ.get("WANDB_PROJECT", "A3Net-IU-Xray"),
+            name=os.environ.get("WANDB_NAME", f"{args.dataset_name}_seed{args.seed}"),
+            config=vars(args),
+        )
+        # log thêm thông tin môi trường bạn đã dump
+        wandb.config.update(get_env_info(), allow_val_change=True)
+
     # fix random seeds
     torch.manual_seed(args.seed)
     torch.backends.cudnn.deterministic = True
