@@ -5,7 +5,6 @@ from datetime import datetime as time
 import datetime, platform, subprocess
 import os
 import wandb, json
-from utils import dump_json, get_env_info
 from models.a3net import BaseModel
 from modules.loss import compute_loss
 from modules.trainer_cmn import Trainer
