@@ -225,7 +225,7 @@ def main():
         "train_size": len(train_dataloader.dataset),
         "val_size": len(val_dataloader.dataset),
         "test_size": len(test_dataloader.dataset),
-        "vocab_size": len(tokenizer.idx2word)
+        "vocab_size": len(tokenizer.idx2token)
     })
 
     # ===== model =====
