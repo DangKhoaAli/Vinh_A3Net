@@ -6,9 +6,23 @@ import pandas as pd
 from numpy import inf
 from abc import abstractmethod
 
+try:
+    import wandb
+    WANDB_OK = True
+except Exception:
+    WANDB_OK = False
+
 class BaseTrainer(object):
     def __init__(self, model, criterion, metric_ftns, optimizer, args, lr_scheduler):
         self.args = args
+
+        self.user_wandb = WANDB_OK and (os.environ.get("WANDB_DISABLED", "false").lower() != "true")
+        # if self.user_wandb:
+        #     wandb.init(
+        #         project=os.environ.get("WANDB_PROJECT", "A3Net-IU-Xray"),
+        #         name=os.environ.get("WANDB_NAME", f"{args.dataset_name}_seed{args.seed}"),
+        #         config=vars(args),
+        #     )
 
         logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                             datefmt='%m/%d/%Y %H:%M:%S', level=logging.INFO)
@@ -61,6 +75,12 @@ class BaseTrainer(object):
             log = {'epoch': epoch}
             log.update(result)
             self._record_best(log)
+
+            if self.user_wandb:
+                wandb.log(
+                    {k: v for k, v in log.items() if isinstance(v, (int, float))},
+                    step=epoch
+                )
 
             # print logged informations to the screen
             for key, value in log.items():
@@ -165,10 +185,14 @@ class BaseTrainer(object):
         }
         filename = os.path.join(self.checkpoint_dir, 'current_checkpoint.pth')
         torch.save(state, filename)
+        if self.user_wandb:
+            wandb.save(filename)  # upload current_checkpoint.pth
         self.logger.info("Saving checkpoint: {} ...".format(filename))
         if save_best:
             best_path = os.path.join(self.checkpoint_dir, 'model_best.pth')
             torch.save(state, best_path)
+            if self.user_wandb:
+                wandb.save(best_path)  # upload model_best.pth
             self.logger.info("Saving current best: model_best.pth ...")
 
     def _resume_checkpoint(self, resume_path):
@@ -204,8 +228,22 @@ class Trainer(BaseTrainer):
             loss = self.criterion(output, reports_ids, reports_masks)
             train_loss += loss.item()
             self.optimizer.zero_grad()
+            global_step = (epoch - 1) * len(self.train_dataloader) + batch_idx
+            
             loss.backward()
+            
+            total_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
+
+            if self.user_wandb and batch_idx % 20 == 0:
+                wandb.log({
+                    "train/loss_step": loss.item(),
+                    "lr": self.optimizer.param_groups[0]["lr"],
+                    "grad_norm": total_norm
+                    # "epoch": epoch,
+                    # "step": epoch * len(self.train_dataloader) + batch_idx
+                }, step=global_step)
             self.optimizer.step()
+
             if batch_idx % self.args.log_period == 0:
                 self.logger.info('[{}/{}] Step: {}/{}, Training Loss: {:.5f}.'
                                  .format(epoch, self.epochs, batch_idx, len(self.train_dataloader),
@@ -230,7 +268,11 @@ class Trainer(BaseTrainer):
             val_met = self.metric_ftns({i: [gt] for i, gt in enumerate(val_gts)},
                                        {i: [re] for i, re in enumerate(val_res)})
             log.update(**{'val_' + k: v for k, v in val_met.items()})
-
+            if self.user_wandb:
+                wandb.log(
+                    {f"val/{k}": v for k, v in val_met.items()},
+                    step=epoch
+                )
         #self.logger.info('[{}/{}] Start to evaluate in the test set.'.format(epoch, self.epochs))
         self.model.eval()
         with torch.no_grad():
@@ -249,5 +291,5 @@ class Trainer(BaseTrainer):
             log.update(**{'test_' + k: v for k, v in test_met.items()})
 
         self.lr_scheduler.step()
-
+       
         return log

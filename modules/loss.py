@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 
 class LanguageModelCriterion(nn.Module):
-    def __init__(self):
+    def __init__(self, smoothing=0.1):
         super(LanguageModelCriterion, self).__init__()
+        self.smoothing = smoothing
 
     def forward(self, input, target, mask):
         # truncate to the same size
@@ -17,5 +18,5 @@ class LanguageModelCriterion(nn.Module):
 
 def compute_loss(output, reports_ids, reports_masks):
     criterion = LanguageModelCriterion()
-    loss = criterion(output, reports_ids[:, 1:], reports_masks[:, 1:]).mean()
+    loss = criterion(output, reports_ids[:, 1:], reports_masks[:, 1:])
     return loss
