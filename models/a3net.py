@@ -62,7 +62,7 @@ class BaseModel(nn.Module):
 
     def forward_iu_xray(self, images, targets=None, mode='train', update_opts={}):
         att_feats_0, fc_feats_0 = self.visual_extractor(images[:, 0])
-        # att_feats_1, fc_feats_1 = self.visual_extractor(images[:, 1])
+        att_feats_1, fc_feats_1 = self.visual_extractor(images[:, 1])
         
         # start
         att_feats_0 = self.image_proj(att_feats_0)  # Shape: (batchsize, 49, 512)

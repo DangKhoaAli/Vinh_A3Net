@@ -62,9 +62,10 @@ class BaseTester(object):
 
 
 class Tester(BaseTester):
-    def __init__(self, model, criterion, metric_ftns, args, test_dataloader):
+    def __init__(self, model, criterion, metric_ftns, args, test_dataloader, image_idx=None):
         super(Tester, self).__init__(model, criterion, metric_ftns, args)
         self.test_dataloader = test_dataloader
+        self.image_idx = image_idx
 
     def test(self):
         self.logger.info('Start to evaluate in the test set.')
@@ -97,7 +98,39 @@ class Tester(BaseTester):
             test_gts.to_csv(os.path.join(self.save_dir, "gts.csv"), index=False, header=False)
         return log
 
-    
+    def test1(self):
+        self.logger.info('Start to evaluate in the 1 test.')
+        log = dict()
+        self.model.eval()
+        with torch.no_grad():
+            for batch_idx, (images_id, images, reports_ids, reports_masks) in tqdm(enumerate(self.test_dataloader)):
+                # Check if image_idx matches the directory name in images_id
+                if self.image_idx is not None and self.image_idx in images_id:
+                    images, reports_ids, reports_masks = images.to(self.device), reports_ids.to(
+                        self.device), reports_masks.to(self.device)
+                    
+                    output = self.model(images, mode='sample')
+                    
+                    if isinstance(output, tuple):
+                        output = output[0]
+                    
+                    reports = self.model.tokenizer.decode_batch(output.cpu().numpy())
+                    return reports
+        return None
+                # ground_truths = self.model.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
+            #     test_res.extend(reports)
+            #     test_gts.extend(ground_truths)
+            # test_met = self.metric_ftns({i: [gt] for i, gt in enumerate(test_gts)},
+            #                             {i: [re] for i, re in enumerate(test_res)})
+            # log.update(**{'test_' + k: v for k, v in test_met.items()})
+            # print(log)
+
+            # test_res, test_gts = pd.DataFrame(test_res), pd.DataFrame(test_gts)
+            # test_res.to_csv(os.path.join(self.save_dir, "res.csv"), index=False, header=False)
+            # test_gts.to_csv(os.path.join(self.save_dir, "gts.csv"), index=False, header=False)
+        # return log
+
+
     def predict(self, image1, image2):
         """
         Generate a report string for two input images.
