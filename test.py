@@ -97,7 +97,7 @@ def parse_agrs():
     # Others
     parser.add_argument('--seed', type=int, default=9233, help='.')
     parser.add_argument('--resume', type=str, help='whether to resume the training from existing checkpoints.')
-    parser.add_argument('--load', type=str, help='whether to load a pre-trained model.')
+    parser.add_argument('--load', type=str, default="/kaggle/input/models/nadkli/modelbest/pytorch/default/1/iu_xray_seed_02032026_ver2_model_best.pth", help='whether to load a pre-trained model.')
     
     args = parser.parse_args()
     return args
