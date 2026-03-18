@@ -126,6 +126,13 @@ def main():
     criterion = compute_loss
     metrics = compute_scores
     
+    # load checkpoint if specified
+    if args.load:
+        checkpoint = torch.load(args.load, map_location='cuda')
+        model.load_state_dict(checkpoint)
+        print(f"Loaded checkpoint from {args.load}")
+    
+    model.eval()
     tester = Tester(model, criterion, metrics, args, test_dataloader)
     
     # nếu có image_path → chạy inference
@@ -138,11 +145,15 @@ def main():
                                 (0.229,0.224,0.225))
         ])
 
-        # img1 = Image.open(args.image_path1).convert("RGB")
-        # img2 = Image.open(args.image_path2).convert("RGB")
+        img1 = Image.open(args.image_path1).convert("RGB")
+        img2 = Image.open(args.image_path2).convert("RGB")
 
         img1 = transform(img1)
         img2 = transform(img2)
+        
+        # move to cuda and add batch dimension
+        img1 = img1.unsqueeze(0).to('cuda')
+        img2 = img2.unsqueeze(0).to('cuda')
 
         # call the Tester.predict method with two separate tensors
         report = tester.predict(img1, img2)
