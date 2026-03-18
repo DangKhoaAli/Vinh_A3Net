@@ -138,8 +138,8 @@ def main():
                                 (0.229,0.224,0.225))
         ])
 
-        img1 = Image.open(args.image_path1).convert("RGB")
-        img2 = Image.open(args.image_path2).convert("RGB")
+        # img1 = Image.open(args.image_path1).convert("RGB")
+        # img2 = Image.open(args.image_path2).convert("RGB")
 
         img1 = transform(img1)
         img2 = transform(img2)

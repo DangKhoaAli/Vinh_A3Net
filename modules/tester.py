@@ -97,27 +97,6 @@ class Tester(BaseTester):
             test_gts.to_csv(os.path.join(self.save_dir, "gts.csv"), index=False, header=False)
         return log
 
-    # def predict(self, image):
-    #     """
-    #     Generate report for a single image
-    #     image: Tensor shape [C, H, W]
-    #     """
-
-    #     self.model.eval()
-
-    #     with torch.no_grad():
-
-    #         # add batch dimension
-    #         image = image.unsqueeze(0).to(self.device)
-
-    #         output = self.model(image, mode='sample')
-
-    #         if isinstance(output, tuple):
-    #             output = output[0]
-
-    #         report = self.model.tokenizer.decode_batch(output.cpu().numpy())[0]
-
-    #     return report
     
     def predict(self, image1, image2):
         """
