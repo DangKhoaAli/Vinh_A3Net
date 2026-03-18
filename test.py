@@ -136,7 +136,7 @@ def main():
         print(f"Loaded checkpoint from {args.load}")
     
     model.eval()
-    tester = Tester(model, criterion, metrics, args, test_dataloader)
+    tester = Tester(model, criterion, metrics, args, test_dataloader, )
     
     # nếu có image_path → chạy inference
     if args.image_path is not None:

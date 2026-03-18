@@ -62,10 +62,10 @@ class BaseTester(object):
 
 
 class Tester(BaseTester):
-    def __init__(self, model, criterion, metric_ftns, args, test_dataloader, image_idx=None):
+    def __init__(self, model, criterion, metric_ftns, args, test_dataloader):
         super(Tester, self).__init__(model, criterion, metric_ftns, args)
         self.test_dataloader = test_dataloader
-        self.image_idx = image_idx
+        # self.image_idx = image_idx
 
     def test(self):
         self.logger.info('Start to evaluate in the test set.')
@@ -111,7 +111,7 @@ class Tester(BaseTester):
             for batch_idx, (images_id, images, reports_ids, reports_masks) in tqdm(enumerate(self.test_dataloader)):
                 # print(f"Batch {batch_idx}: images_id = {images_id}")
                 # Check if image_idx matches the directory name in images_id
-                if self.image_idx is not None and self.image_idx in images_id:
+                if self.args.image_path is not None and self.args.iamge_path in images_id:
                     images, reports_ids, reports_masks = images.to(self.device), reports_ids.to(
                         self.device), reports_masks.to(self.device)
                     
@@ -121,8 +121,9 @@ class Tester(BaseTester):
                         output = output[0]
                     
                     reports = self.model.tokenizer.decode_batch(output.cpu().numpy())
+                    print(f"Generated report for {self.args.image_path}: {reports[0]}")
                     return reports
-        return "No matching image found in the test set."
+            return "No matching image found in the test set."
                 # ground_truths = self.model.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
             #     test_res.extend(reports)
             #     test_gts.extend(ground_truths)
