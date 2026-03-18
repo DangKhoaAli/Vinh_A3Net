@@ -116,7 +116,7 @@ class Tester(BaseTester):
                     
                     reports = self.model.tokenizer.decode_batch(output.cpu().numpy())
                     return reports
-        return None
+        return "No matching image found in the test set."
                 # ground_truths = self.model.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
             #     test_res.extend(reports)
             #     test_gts.extend(ground_truths)
