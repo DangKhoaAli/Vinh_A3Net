@@ -111,7 +111,7 @@ class Tester(BaseTester):
             for batch_idx, (images_id, images, reports_ids, reports_masks) in tqdm(enumerate(self.test_dataloader)):
                 # print(f"Batch {batch_idx}: images_id = {images_id}")
                 # Check if image_idx matches the directory name in images_id
-                if self.args.image_path is not None and self.args.iamge_path in images_id:
+                if self.args.image_path is not None and self.args.image_path in images_id:
                     images, reports_ids, reports_masks = images.to(self.device), reports_ids.to(
                         self.device), reports_masks.to(self.device)
                     
