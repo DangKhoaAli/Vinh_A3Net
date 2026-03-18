@@ -140,7 +140,8 @@ def main():
     
     # nếu có image_path → chạy inference
     if args.image_path is not None:
-        tester.test1()
+        report = tester.test1()
+        print(f"Generated report for {args.image_path}: {report}")
     else:
         tester.test()
 

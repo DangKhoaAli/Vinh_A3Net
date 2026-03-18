@@ -74,9 +74,10 @@ class Tester(BaseTester):
         with torch.no_grad():
             test_gts, test_res = [], []
             for batch_idx, (images_id, images, reports_ids, reports_masks) in tqdm(enumerate(self.test_dataloader)):
-                print(f"Batch {batch_idx}: images_id = {images_id}")
-                print(f"Batch {batch_idx}: reports_ids = {reports_ids}")
-                print(f"Batch {batch_idx}: reports_masks = {reports_masks}")
+                # print(f"Batch {batch_idx}: images_id = {images_id}")
+                # print(f"Batch {batch_idx}: images.shape = {images}")
+                # print(f"Batch {batch_idx}: reports_ids = {reports_ids}")
+                # print(f"Batch {batch_idx}: reports_masks = {reports_masks}")
             
                 images, reports_ids, reports_masks = images.to(self.device), reports_ids.to(
                     self.device), reports_masks.to(self.device)
@@ -108,7 +109,7 @@ class Tester(BaseTester):
         self.model.eval()
         with torch.no_grad():
             for batch_idx, (images_id, images, reports_ids, reports_masks) in tqdm(enumerate(self.test_dataloader)):
-                print(f"Batch {batch_idx}: images_id = {images_id}")
+                # print(f"Batch {batch_idx}: images_id = {images_id}")
                 # Check if image_idx matches the directory name in images_id
                 if self.image_idx is not None and self.image_idx in images_id:
                     images, reports_ids, reports_masks = images.to(self.device), reports_ids.to(
