@@ -128,8 +128,11 @@ def main():
     
     # load checkpoint if specified
     if args.load:
-        checkpoint = torch.load("/kaggle/input/models/nadkli/modelbest/pytorch/default/1/iu_xray_seed_02032026_ver2_model_best.pth", map_location='cuda')
-        model.load_state_dict(checkpoint)
+        checkpoint = torch.load(args.load, map_location='cuda')
+        if isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
+            model.load_state_dict(checkpoint['state_dict'])
+        else:
+            model.load_state_dict(checkpoint)
         print(f"Loaded checkpoint from {args.load}")
     
     model.eval()
