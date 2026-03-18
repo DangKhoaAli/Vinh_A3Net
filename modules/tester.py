@@ -114,19 +114,18 @@ class Tester(BaseTester):
                 if self.args.image_path is not None and self.args.image_path in images_id:
                     for i in range(len(images_id)):
                         if self.args.image_path == images_id[i]:
-                            # images = images[i].unsqueeze(0)  # Add batch dimension
-                            # reports_ids = reports_ids[i].unsqueeze(0)
-                            # reports_masks = reports_masks[i].unsqueeze(0)
-                            # break
-                            images, reports_ids, reports_masks = images.to(self.device), reports_ids.to(
-                                self.device), reports_masks.to(self.device)
-                            
-                            output = self.model(images, mode='sample')
-                            
+
+                            image = images[i].unsqueeze(0).to(self.device)
+                            report_id = reports_ids[i].unsqueeze(0).to(self.device)
+                            report_mask = reports_masks[i].unsqueeze(0).to(self.device)
+
+                            output = self.model(image, mode='sample')
+
                             if isinstance(output, tuple):
                                 output = output[0]
-                            
+
                             reports = self.model.tokenizer.decode_batch(output.cpu().numpy())
+
                             print(f"Generated report for {self.args.image_path}: {reports[0]}")
                             return reports
             return "No matching image found in the test set."
