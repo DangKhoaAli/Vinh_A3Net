@@ -129,18 +129,6 @@ class Tester(BaseTester):
                             print(f"Generated report for {self.args.image_path}: {reports[0]}")
                             return reports
             return "No matching image found in the test set."
-                # ground_truths = self.model.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
-            #     test_res.extend(reports)
-            #     test_gts.extend(ground_truths)
-            # test_met = self.metric_ftns({i: [gt] for i, gt in enumerate(test_gts)},
-            #                             {i: [re] for i, re in enumerate(test_res)})
-            # log.update(**{'test_' + k: v for k, v in test_met.items()})
-            # print(log)
-
-            # test_res, test_gts = pd.DataFrame(test_res), pd.DataFrame(test_gts)
-            # test_res.to_csv(os.path.join(self.save_dir, "res.csv"), index=False, header=False)
-            # test_gts.to_csv(os.path.join(self.save_dir, "gts.csv"), index=False, header=False)
-        # return log
 
 
     def predict(self, image1, image2):
