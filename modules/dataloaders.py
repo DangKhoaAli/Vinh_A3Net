@@ -16,8 +16,8 @@ class R2DataLoader(DataLoader):
 
         if split == 'train':
             self.transform = transforms.Compose([
-                transforms.Resize(512),
-                transforms.RandomCrop(512),
+                transforms.Resize(256, 256),
+                transforms.RandomCrop(224),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize((0.485, 0.456, 0.406),
